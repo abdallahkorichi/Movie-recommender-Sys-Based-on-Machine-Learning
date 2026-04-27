@@ -1,0 +1,10 @@
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+data/
+artifacts/
+artifacts_backup/
+data/raw/

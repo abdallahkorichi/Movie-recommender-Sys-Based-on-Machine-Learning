@@ -1,0 +1,157 @@
+import { useState, useEffect, useContext } from 'react';
+import { fetchTmdbDetails, getTmdbImageUrl } from '../utils/tmdb';
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, Loader2, Check } from 'lucide-react';
+import MovieModal from './MovieModal';
+import { AuthContext } from '../context/AuthContext';
+
+export default function MovieCard({ content }) {
+    const { ratings, updateRating } = useContext(AuthContext);
+    const [tmdbData, setTmdbData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [hover, setHover] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Rating from MongoDB context (cross-device)
+    const savedRating = ratings[content._id] || null;
+    const [ratingLoading, setRatingLoading] = useState(false);
+    const [showSaved, setShowSaved] = useState(false);
+    const [hoveredStar, setHoveredStar] = useState(0);
+
+    useEffect(() => {
+        let isMounted = true;
+        const load = async () => {
+            setLoading(true);
+            const data = await fetchTmdbDetails(content.tmdbId);
+            if (isMounted) {
+                setTmdbData(data);
+                setLoading(false);
+            }
+        };
+        load();
+        return () => { isMounted = false; }
+    }, [content.tmdbId]);
+
+    const handleRating = async (rating) => {
+        try {
+            setRatingLoading(true);
+            await axios.post('/api/recommendations/interact', {
+                contentId: content._id,
+                rating: rating
+            });
+            // Update global context → no localStorage needed
+            updateRating(content._id, rating);
+            setShowSaved(true);
+            setTimeout(() => setShowSaved(false), 1500);
+        } catch (err) {
+            console.error("Failed to submit rating", err);
+        } finally {
+            setRatingLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex-shrink-0 w-48 h-72 bg-slate-900 border border-slate-800 animate-pulse rounded-lg flex items-center justify-center">
+               <Loader2 className="w-6 h-6 text-slate-600 animate-spin" />
+            </div>
+        )
+    }
+
+    if (!tmdbData) return null;
+
+    const posterUrl = getTmdbImageUrl(tmdbData.poster_path, "w500");
+
+    return (
+        <>
+            <MovieModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                content={content} 
+                tmdbData={tmdbData}
+                savedRating={savedRating}
+                onRate={handleRating}
+            />
+
+            <motion.div 
+                className="relative flex-shrink-0 w-48 h-72 rounded-lg overflow-hidden bg-slate-900 group cursor-pointer border border-slate-800 shadow-xl"
+                onMouseEnter={() => setHover(true)}
+                onMouseLeave={() => { setHover(false); setHoveredStar(0); }}
+                onClick={() => setIsModalOpen(true)}
+                whileHover={{ scale: 1.05, zIndex: 10 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+            >
+            <img 
+                src={posterUrl} 
+                alt={tmdbData.title} 
+                className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-110" 
+            />
+            
+            <AnimatePresence>
+                {hover && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 40 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute bottom-0 left-0 right-0 p-3 bg-surface/90 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]"
+                    >
+                        <h3 className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1 drop-shadow-md">
+                            {tmdbData.title}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-1.5 mb-2 drop-shadow-md">
+                            <span className="text-[10px] font-black text-accent tracking-widest bg-accent/10 px-1 py-0.5 rounded">
+                                {tmdbData.release_date?.split('-')[0]}
+                            </span>
+                            <span className="text-[10px] text-yellow-400 font-bold border border-yellow-400/20 bg-yellow-400/10 px-1 py-0.5 rounded">
+                                ★ {tmdbData.vote_average?.toFixed(1)}
+                            </span>
+                            {tmdbData.genres?.slice(0, 2).map(g => (
+                                <span key={g.id} className="text-[8px] font-medium text-slate-300 uppercase tracking-widest bg-slate-800/80 border border-slate-700 px-1 py-0.5 rounded">
+                                    {g.name}
+                                </span>
+                            ))}
+                        </div>
+
+                        <div className="pt-1.5 border-t border-slate-600/50 flex flex-col gap-1">
+                             <span className="text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors"
+                                 style={{ color: showSaved ? '#4ade80' : savedRating ? '#facc15' : '#94a3b8' }}
+                             >
+                                 {showSaved ? '✓ Saved!' : savedRating ? `Your rating: ${savedRating}★` : 'Rate this'}
+                             </span>
+                             <div className="flex gap-1 h-5 items-center">
+                                 {[1, 2, 3, 4, 5].map((star) => (
+                                     <button 
+                                        key={star}
+                                        disabled={ratingLoading}
+                                        onMouseEnter={() => setHoveredStar(star)}
+                                        onMouseLeave={() => setHoveredStar(0)}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleRating(star);
+                                        }}
+                                        className="hover:scale-125 transition-transform disabled:opacity-50"
+                                     >
+                                         <Star 
+                                            className={`w-4 h-4 transition-all duration-150 ${
+                                                hoveredStar >= star
+                                                ? 'fill-yellow-300 text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.8)]'
+                                                : savedRating >= star
+                                                ? 'fill-yellow-400 text-yellow-400 drop-shadow-[0_0_4px_rgba(250,204,21,0.5)]'
+                                                : 'fill-transparent text-slate-600'
+                                            }`} 
+                                         />
+                                     </button>
+                                 ))}
+                             </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+        </>
+    );
+}
