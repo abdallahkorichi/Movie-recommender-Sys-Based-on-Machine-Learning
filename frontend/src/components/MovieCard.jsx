@@ -6,24 +6,29 @@ import { Star, Loader2, Check } from 'lucide-react';
 import MovieModal from './MovieModal';
 import { AuthContext } from '../context/AuthContext';
 
-export default function MovieCard({ content }) {
+export default function MovieCard({ content, onSelectContent = null }) {
     const { ratings, updateRating } = useContext(AuthContext);
+    const [activeContent, setActiveContent] = useState(content);
     const [tmdbData, setTmdbData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [hover, setHover] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
     // Rating from MongoDB context (cross-device)
-    const savedRating = ratings[content._id] || null;
+    const savedRating = ratings[activeContent._id] || null;
     const [ratingLoading, setRatingLoading] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
     const [hoveredStar, setHoveredStar] = useState(0);
 
     useEffect(() => {
+        setActiveContent(content);
+    }, [content]);
+
+    useEffect(() => {
         let isMounted = true;
         const load = async () => {
             setLoading(true);
-            const data = await fetchTmdbDetails(content.tmdbId);
+            const data = await fetchTmdbDetails(activeContent.tmdbId);
             if (isMounted) {
                 setTmdbData(data);
                 setLoading(false);
@@ -31,17 +36,17 @@ export default function MovieCard({ content }) {
         };
         load();
         return () => { isMounted = false; }
-    }, [content.tmdbId]);
+    }, [activeContent.tmdbId]);
 
     const handleRating = async (rating) => {
         try {
             setRatingLoading(true);
             await axios.post('/api/recommendations/interact', {
-                contentId: content._id,
+                contentId: activeContent._id,
                 rating: rating
             });
             // Update global context → no localStorage needed
-            updateRating(content._id, rating);
+            updateRating(activeContent._id, rating);
             setShowSaved(true);
             setTimeout(() => setShowSaved(false), 1500);
         } catch (err) {
@@ -65,20 +70,34 @@ export default function MovieCard({ content }) {
 
     return (
         <>
-            <MovieModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                content={content} 
-                tmdbData={tmdbData}
-                savedRating={savedRating}
-                onRate={handleRating}
-            />
+            {isModalOpen && (
+                <MovieModal 
+                    isOpen={isModalOpen} 
+                    onClose={() => setIsModalOpen(false)} 
+                    content={activeContent} 
+                    tmdbData={tmdbData}
+                    savedRating={savedRating}
+                    onRate={handleRating}
+                    onSelectSimilar={(movie) => {
+                        setActiveContent(movie);
+                        setShowSaved(false);
+                        setHoveredStar(0);
+                    }}
+                />
+            )}
 
             <motion.div 
                 className="relative flex-shrink-0 w-48 h-72 rounded-lg overflow-hidden bg-slate-900 group cursor-pointer border border-slate-800 shadow-xl"
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => { setHover(false); setHoveredStar(0); }}
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                    if (onSelectContent) {
+                        onSelectContent(content);
+                        return;
+                    }
+                    setActiveContent(content);
+                    setIsModalOpen(true);
+                }}
                 whileHover={{ scale: 1.05, zIndex: 10 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2 }}

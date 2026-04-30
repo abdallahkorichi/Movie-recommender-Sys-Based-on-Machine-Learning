@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import MovieCard from '../components/MovieCard';
-import { Loader2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ArrowLeft, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const CATEGORY_MAP = {
     personalized: { title: 'AuraFlix Picks For You', filter: null },
@@ -59,36 +60,40 @@ export default function CategoryView() {
     const currentMovies = movies.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
-        <div className="pt-24 pb-20 px-8 md:px-16 min-h-screen bg-background">
-            <div className="mb-8 flex items-center gap-4">
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="max-w-[1400px] mx-auto px-6 md:px-12 py-12"
+        >
+            <div className="flex items-center gap-3 mb-10">
                 <Link to="/" className="p-2 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
-                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{categoryInfo.title}</h1>
+                <h1 className="text-4xl font-bold text-white tracking-tight">{categoryInfo.title}</h1>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-12">
+            <div className="flex flex-wrap gap-6 justify-start">
                 {currentMovies.map(movie => (
                     <MovieCard key={movie._id} content={movie} />
                 ))}
             </div>
 
             {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-4 mt-12">
                     <button 
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="p-2 rounded-lg bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                        className="p-2 rounded-lg bg-slate-800 text-white disabled:opacity-30 hover:bg-slate-700 transition-colors"
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </button>
                     <span className="text-slate-300 font-medium">
-                        Page <span className="text-white">{currentPage}</span> of {totalPages}
+                        Page <span className="text-white font-bold">{currentPage}</span> of {totalPages}
                     </span>
                     <button 
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="p-2 rounded-lg bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                        className="p-2 rounded-lg bg-slate-800 text-white disabled:opacity-30 hover:bg-slate-700 transition-colors"
                     >
                         <ChevronRight className="w-6 h-6" />
                     </button>
@@ -96,10 +101,12 @@ export default function CategoryView() {
             )}
             
             {movies.length === 0 && !loading && (
-                <div className="text-center text-slate-400 mt-20">
-                    <p className="text-xl">No movies found in this category.</p>
+                <div className="flex flex-col items-center justify-center py-32 bg-slate-900/30 rounded-2xl border border-slate-800/50 mt-8">
+                    <Sparkles className="w-16 h-16 text-slate-600 mb-4" />
+                    <h3 className="text-xl font-medium text-slate-300">No movies found.</h3>
+                    <p className="text-slate-500 mt-2">Try another section from Home.</p>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }

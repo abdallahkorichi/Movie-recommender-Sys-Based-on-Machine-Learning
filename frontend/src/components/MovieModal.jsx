@@ -6,7 +6,7 @@ import { getTmdbImageUrl } from '../utils/tmdb';
 import axios from 'axios';
 import MovieCard from './MovieCard';
 
-export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRating, onRate }) {
+export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRating, onRate, onSelectSimilar }) {
     const [ratingLoading, setRatingLoading] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
     const [hoveredStar, setHoveredStar] = useState(0);
@@ -145,8 +145,11 @@ export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRa
                                     ) : similarMovies.length > 0 ? (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                             {similarMovies.slice(0, 8).map(movie => (
-                                                <div key={movie._id} onClick={onClose}>
-                                                    <MovieCard content={movie} />
+                                                <div key={movie._id}>
+                                                    <MovieCard
+                                                        content={movie}
+                                                        onSelectContent={onSelectSimilar}
+                                                    />
                                                 </div>
                                             ))}
                                         </div>

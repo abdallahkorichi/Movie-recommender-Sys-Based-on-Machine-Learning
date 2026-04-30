@@ -9,7 +9,7 @@ export default function Home() {
     const [popular, setPopular] = useState([]);
     const [personalized, setPersonalized] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Auto-Slider Hero States
     const [heroMovies, setHeroMovies] = useState([]);
     const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
@@ -21,7 +21,7 @@ export default function Home() {
                     axios.get('/api/recommendations/popular?limit=100'),
                     axios.get('/api/recommendations/personalized')
                 ]);
-                
+
                 setPopular(popRes.data);
                 setPersonalized(persRes.data);
 
@@ -56,13 +56,15 @@ export default function Home() {
 
     const heroItem = heroMovies[currentHeroIndex];
 
-    const actionMovies = popular.filter(m => m.genres && m.genres.includes('Action'));
+    const actionMovies = popular.filter(
+        m => m.genres && (m.genres.includes('Action') || m.genres.includes('Adventure'))
+    );
     const scifiMovies = popular.filter(m => m.genres && m.genres.includes('Sci-Fi'));
     const comedyMovies = popular.filter(m => m.genres && m.genres.includes('Comedy'));
     const dramaMovies = popular.filter(m => m.genres && m.genres.includes('Drama'));
 
     return (
-        <div className="-mt-24 pb-20 overflow-x-hidden"> 
+        <div className="-mt-24 pb-20 overflow-x-hidden">
             {/* Cinematic Slider Hero Section */}
             {heroMovies.length > 0 && (
                 <div className="relative w-full h-[75vh] min-h-[600px] flex items-end pb-24 group">
@@ -75,8 +77,8 @@ export default function Home() {
                             transition={{ duration: 0.8, ease: "easeInOut" }}
                             className="absolute inset-0 z-0"
                         >
-                            <img 
-                                src={getTmdbImageUrl(heroItem.backdrop_path, 'original')} 
+                            <img
+                                src={getTmdbImageUrl(heroItem.backdrop_path, 'original')}
                                 alt={heroItem.title}
                                 className="w-full h-full object-cover opacity-50"
                             />
@@ -89,7 +91,7 @@ export default function Home() {
                                     <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter">
                                         {heroItem.title}
                                     </h1>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-3 mb-6 font-semibold text-slate-300">
                                         <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-md text-white border border-white/20 shadow-lg">
                                             {heroItem.release_date?.split('-')[0]}
@@ -108,7 +110,7 @@ export default function Home() {
                                             ))}
                                         </div>
                                     </div>
-                                    
+
                                     <p className="text-lg md:text-xl text-slate-300 line-clamp-3 mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-relaxed max-w-3xl">
                                         {heroItem.overview}
                                     </p>
@@ -120,8 +122,8 @@ export default function Home() {
                     {/* Progress dots for visual slider feedback */}
                     <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-20">
                         {heroMovies.map((_, idx) => (
-                            <div 
-                                key={idx} 
+                            <div
+                                key={idx}
                                 className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentHeroIndex ? 'w-8 bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'w-2 bg-slate-600/50'}`}
                             />
                         ))}

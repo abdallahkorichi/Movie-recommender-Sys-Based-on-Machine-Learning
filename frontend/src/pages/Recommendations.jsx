@@ -14,8 +14,8 @@ export default function Recommendations() {
     useEffect(() => {
         const fetchRecommendations = async () => {
             try {
-                const res = await axios.get('/api/recommendations/personalized');
-                setPersonalized(res.data);
+                const personalizedRes = await axios.get('/api/recommendations/personalized');
+                setPersonalized(personalizedRes.data);
             } catch (err) {
                 console.error("Rec Data Error:", err);
             } finally {
