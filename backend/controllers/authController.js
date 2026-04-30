@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Counter from '../models/Counter.js';
 import generateToken from '../utils/generateToken.js';
+import isEmail from 'validator/lib/isEmail.js';
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
@@ -8,7 +9,13 @@ import generateToken from '../utils/generateToken.js';
 const authUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!isEmail(normalizedEmail)) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(res, user._id);
@@ -34,8 +41,13 @@ const authUser = async (req, res) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
-    const userExists = await User.findOne({ email });
+    if (!isEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
+    }
+
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -43,7 +55,7 @@ const registerUser = async (req, res) => {
     // Assign the next auto-increment integer ID for the Python ALS model
     const appUserId = await Counter.getNextId('userId');
 
-    const user = await User.create({ name, email, password, appUserId });
+    const user = await User.create({ name, email: normalizedEmail, password, appUserId });
 
     if (user) {
       const token = generateToken(res, user._id);
