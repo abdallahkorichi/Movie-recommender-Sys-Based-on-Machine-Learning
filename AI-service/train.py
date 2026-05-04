@@ -22,7 +22,7 @@ from src.collab_model import (
     save_collab_artifacts, load_collab_artifacts, artifacts_exist,
 )
 from src.content_model import (
-    train_content_embeddings, build_faiss_index,
+    train_content_embeddings,
     save_content_artifacts, load_content_artifacts, content_artifacts_exist,
 )
 from src.hybrid import build_alignment_map, validate_alignment
@@ -93,11 +93,10 @@ def main(args):
     print("\n── Step 4: Content model ────────────────────────────────")
     if not args.force and content_artifacts_exist():
         print("Content artifacts found — loading from disk.")
-        content_embeddings, faiss_index = load_content_artifacts()
+        content_embeddings = load_content_artifacts()
     else:
         content_embeddings = train_content_embeddings(movie_content)
-        faiss_index = build_faiss_index(content_embeddings)
-        save_content_artifacts(content_embeddings, faiss_index)
+        save_content_artifacts(content_embeddings)
 
     # 5. Alignment
     print("\n── Step 5: Alignment ────────────────────────────────────")
@@ -149,7 +148,6 @@ def main(args):
             inv_user_mapping=inv_user_mapping,
             als_to_embed=als_to_embed,
             content_embeddings=content_embeddings,
-            faiss_index=faiss_index,
             popular_movies=popular_movies,
             k=10,
             sample_users=500,

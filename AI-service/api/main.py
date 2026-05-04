@@ -50,7 +50,6 @@ class AppState:
     als_to_embed: dict = {}         # als_item_idx -> embed_idx  (THE alignment map)
     movieid_to_embed_idx: dict = {} # movieId -> embed_idx
     content_embeddings = None
-    faiss_index = None
     popular_movies = None
     movie_lookup: dict = {}         # movieId -> {title, genres}
     movie_content = None            # DataFrame, needed for similar movies
@@ -76,7 +75,7 @@ async def lifespan(app: FastAPI):
      state.inv_user_mapping, inv_movie_mapping) = load_collab_artifacts()
 
     # Load content artifacts
-    state.content_embeddings, state.faiss_index = load_content_artifacts()
+    state.content_embeddings = load_content_artifacts()
 
     # Load raw data
     movies = load_movies()
@@ -185,7 +184,6 @@ def recommend(
         inv_user_mapping=state.inv_user_mapping,
         als_to_embed=state.als_to_embed,
         content_embeddings=state.content_embeddings,
-        faiss_index=state.faiss_index,
         popular_movies=state.popular_movies,
         top_k=k,
         alpha=alpha,

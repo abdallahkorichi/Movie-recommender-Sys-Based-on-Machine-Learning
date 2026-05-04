@@ -171,7 +171,7 @@ def run_retrain(dry_run: bool = False, min_new: int = 0) -> dict:
 
         # 4. Rebuild alignment (content embeddings never change — save to retrain)
         print("\n== Step 4: Alignment ====================================")
-        content_embeddings, faiss_index = load_content_artifacts()
+        content_embeddings = load_content_artifacts()
         movieid_to_embed_idx = {
             int(row["movieId"]): i
             for i, row in movie_content.iterrows()

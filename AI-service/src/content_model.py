@@ -1,5 +1,4 @@
 import numpy as np
-import faiss
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
@@ -24,33 +23,17 @@ def train_content_embeddings(movie_content, batch_size: int = 512) -> np.ndarray
     return embeddings.astype("float32")
 
 
-def build_faiss_index(embeddings: np.ndarray) -> faiss.IndexFlatIP:
-    """
-    Build a FAISS inner-product index for fast ANN search.
-    Since embeddings are L2-normalized, inner product == cosine similarity.
-    """
-    index = faiss.IndexFlatIP(embeddings.shape[1])
-    index.add(embeddings)
-    print(f"[content_model] FAISS index built with {index.ntotal:,} vectors.")
-    return index
-
-
-def save_content_artifacts(embeddings: np.ndarray, index: faiss.IndexFlatIP):
+def save_content_artifacts(embeddings: np.ndarray):
     ARTIFACT_PATH.mkdir(exist_ok=True)
     np.save(ARTIFACT_PATH / "embeddings.npy", embeddings)
-    faiss.write_index(index, str(ARTIFACT_PATH / "faiss.index"))
     print("[content_model] Content artifacts saved.")
 
 
 def load_content_artifacts():
     embeddings = np.load(ARTIFACT_PATH / "embeddings.npy")
-    index = faiss.read_index(str(ARTIFACT_PATH / "faiss.index"))
-    print(f"[content_model] Loaded embeddings {embeddings.shape} + FAISS index.")
-    return embeddings, index
+    print(f"[content_model] Loaded embeddings {embeddings.shape}.")
+    return embeddings
 
 
 def content_artifacts_exist() -> bool:
-    return (
-        (ARTIFACT_PATH / "embeddings.npy").exists() and
-        (ARTIFACT_PATH / "faiss.index").exists()
-    )
+    return (ARTIFACT_PATH / "embeddings.npy").exists()

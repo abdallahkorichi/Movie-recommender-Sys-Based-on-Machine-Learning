@@ -44,7 +44,6 @@ Artifacts are saved to `artifacts/`:
 - `sparse_matrix.pkl` — user-item interaction matrix
 - `mappings.pkl` — user/movie index mappings
 - `embeddings.npy` — MiniLM content embeddings (float32)
-- `faiss.index` — FAISS approximate nearest neighbour index
 
 ---
 
@@ -84,7 +83,7 @@ movie_recommender/
 │   ├── data_loader.py     # CSV loading
 │   ├── preprocessing.py   # Implicit conversion, content building
 │   ├── collab_model.py    # ALS training + save/load
-│   ├── content_model.py   # MiniLM embeddings + FAISS index
+│   ├── content_model.py   # MiniLM embeddings
 │   ├── hybrid.py          # Hybrid scoring + similar movies
 │   └── evaluation.py      # Precision@K, Recall@K, NDCG@K, coverage, novelty
 ├── api/

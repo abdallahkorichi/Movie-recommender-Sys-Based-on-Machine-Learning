@@ -123,7 +123,6 @@ def recommend_hybrid(
     inv_user_mapping: dict,
     als_to_embed: dict,
     content_embeddings: np.ndarray,
-    faiss_index,
     popular_movies=None,
     top_k: int = 10,
     alpha: float = 0.7,
