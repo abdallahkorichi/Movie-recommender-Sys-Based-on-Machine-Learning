@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import Recommendations from './pages/Recommendations';
 import Library from './pages/Library';
+import WatchLater from './pages/WatchLater';
 import Profile from './pages/Profile';
 import CategoryView from './pages/CategoryView';
 import Search from './pages/Search';
@@ -37,6 +38,7 @@ function App() {
           {/* Protected Routes */}
           <Route path="/" element={user ? <Home /> : <Navigate to="/login" />} />
           <Route path="/recommendations" element={user ? <Recommendations /> : <Navigate to="/login" />} />
+          <Route path="/watch-later" element={user ? <WatchLater /> : <Navigate to="/login" />} />
           <Route path="/library" element={user ? <Library /> : <Navigate to="/login" />} />
           <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
           <Route path="/search" element={user ? <Search /> : <Navigate to="/login" />} />

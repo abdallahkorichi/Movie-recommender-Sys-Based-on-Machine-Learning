@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, Star, Check, Loader2 } from 'lucide-react';
+import { X, Clock, Star, Check, Loader2, Bookmark, BookmarkCheck } from 'lucide-react';
 import { getTmdbImageUrl } from '../utils/tmdb';
 import axios from 'axios';
 import MovieCard from './MovieCard';
+import { AuthContext } from '../context/AuthContext';
 
 export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRating, onRate, onSelectSimilar }) {
+    const { isInWatchLater, toggleWatchLater } = useContext(AuthContext);
     const [ratingLoading, setRatingLoading] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
     const [hoveredStar, setHoveredStar] = useState(0);
@@ -37,6 +39,8 @@ export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRa
     }, [isOpen]);
 
     if (!tmdbData) return null;
+
+    const savedForLater = isInWatchLater(content._id);
 
     const handleRating = async (star) => {
         try {
@@ -107,6 +111,21 @@ export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRa
                                         <span key={g.id} className="text-[11px] uppercase font-bold tracking-[0.2em] text-slate-400 border border-slate-700 bg-slate-800/50 px-3 py-1.5 rounded">{g.name}</span>
                                     ))}
                                 </div>
+
+                                <button
+                                    onClick={() => toggleWatchLater(content)}
+                                    className={`flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border ${
+                                        savedForLater
+                                            ? 'bg-primary/20 border-primary/50 text-primary hover:bg-primary/30'
+                                            : 'bg-slate-800/50 border-slate-600 text-slate-300 hover:border-primary/50 hover:text-white'
+                                    }`}
+                                >
+                                    {savedForLater ? (
+                                        <><BookmarkCheck className="w-4 h-4 fill-current" /> Saved</>
+                                    ) : (
+                                        <><Bookmark className="w-4 h-4" /> Save for later</>
+                                    )}
+                                </button>
 
                                 {/* Rating — reads savedRating from MongoDB context via MovieCard */}
                                 <div className="mt-4 bg-slate-800/30 border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center gap-3 shadow-inner">

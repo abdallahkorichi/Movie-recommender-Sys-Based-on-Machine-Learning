@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Content',
     }],
+    // Movies the user manually saved to watch later
+    watchLater: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Content',
+    }],
     // Star ratings persisted to MongoDB for cross-device consistency
     // { contentId (string) → rating (1–5) }
     ratings: {

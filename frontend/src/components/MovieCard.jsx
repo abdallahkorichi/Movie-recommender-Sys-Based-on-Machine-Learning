@@ -2,12 +2,12 @@ import { useState, useEffect, useContext } from 'react';
 import { fetchTmdbDetails, getTmdbImageUrl } from '../utils/tmdb';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Loader2, Check } from 'lucide-react';
+import { Star, Loader2, Bookmark, BookmarkCheck } from 'lucide-react';
 import MovieModal from './MovieModal';
 import { AuthContext } from '../context/AuthContext';
 
 export default function MovieCard({ content, onSelectContent = null }) {
-    const { ratings, updateRating } = useContext(AuthContext);
+    const { user, ratings, updateRating, isInWatchLater, toggleWatchLater } = useContext(AuthContext);
     const [activeContent, setActiveContent] = useState(content);
     const [tmdbData, setTmdbData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -67,6 +67,13 @@ export default function MovieCard({ content, onSelectContent = null }) {
     if (!tmdbData) return null;
 
     const posterUrl = getTmdbImageUrl(tmdbData.poster_path, "w500");
+    const savedForLater = isInWatchLater(activeContent._id);
+
+    const handleWatchLater = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleWatchLater(activeContent);
+    };
 
     return (
         <>
@@ -107,6 +114,24 @@ export default function MovieCard({ content, onSelectContent = null }) {
                 alt={tmdbData.title} 
                 className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-110" 
             />
+
+            {user && (
+                <button
+                    onClick={handleWatchLater}
+                    className={`absolute top-2 right-2 z-20 p-1.5 rounded-full backdrop-blur-md border transition-all ${
+                        savedForLater
+                            ? 'bg-primary/90 border-primary text-white opacity-100'
+                            : 'bg-black/50 border-white/10 text-slate-300 opacity-0 group-hover:opacity-100 hover:bg-black/70 hover:text-white'
+                    }`}
+                    aria-label={savedForLater ? 'Remove from Watch Later' : 'Save for later'}
+                >
+                    {savedForLater ? (
+                        <BookmarkCheck className="w-4 h-4 fill-current" />
+                    ) : (
+                        <Bookmark className="w-4 h-4" />
+                    )}
+                </button>
+            )}
             
             <AnimatePresence>
                 {hover && (

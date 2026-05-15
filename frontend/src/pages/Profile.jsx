@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { User, Mail, Star, Heart, LogOut, Shield, Bell } from 'lucide-react';
+import { User, Mail, Star, Heart, LogOut, Shield, Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -14,11 +14,13 @@ export default function Profile() {
         ? (Object.values(ratings).reduce((a, b) => a + b, 0) / ratingCount).toFixed(1)
         : '—';
     const favoriteCount = user.favorites?.length || 0;
+    const watchLaterCount = user.watchLater?.length || 0;
 
     const stats = [
         { icon: Star, label: 'Movies Rated', value: ratingCount, color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/20' },
         { icon: Heart, label: 'In My List', value: favoriteCount, color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-400/20' },
-        { icon: Star, label: 'Avg. Rating', value: avgRating, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' },
+        { icon: Bookmark, label: 'Watch Later', value: watchLaterCount, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' },
+        { icon: Star, label: 'Avg. Rating', value: avgRating, color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/20' },
     ];
 
     return (
@@ -47,7 +49,7 @@ export default function Profile() {
                     </div>
 
                     {/* Stats row */}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {stats.map(({ icon: Icon, label, value, color, bg, border }) => (
                             <div key={label} className={`${bg} ${border} border rounded-xl p-4 flex flex-col items-center gap-1 text-center`}>
                                 <Icon className={`w-5 h-5 ${color}`} />
@@ -60,7 +62,7 @@ export default function Profile() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Link to="/library" className="flex items-center gap-4 p-5 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-primary/40 hover:bg-slate-800/60 transition-all group">
                     <div className="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
                         <Heart className="w-5 h-5 text-rose-400" />
@@ -68,6 +70,16 @@ export default function Profile() {
                     <div>
                         <p className="text-white font-semibold text-sm">My List</p>
                         <p className="text-slate-400 text-xs">{favoriteCount} Movies</p>
+                    </div>
+                </Link>
+
+                <Link to="/watch-later" className="flex items-center gap-4 p-5 bg-slate-900/60 border border-slate-700/50 rounded-xl hover:border-primary/40 hover:bg-slate-800/60 transition-all group">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                        <Bookmark className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-white font-semibold text-sm">Watch Later</p>
+                        <p className="text-slate-400 text-xs">{watchLaterCount} Movies</p>
                     </div>
                 </Link>
 

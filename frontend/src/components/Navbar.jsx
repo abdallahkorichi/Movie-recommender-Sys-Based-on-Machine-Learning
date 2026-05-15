@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Film, User, LogOut, Flame, Heart, Compass, Search } from 'lucide-react';
+import { Film, User, LogOut, Heart, Compass, Search, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -32,6 +32,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/', icon: Film },
     { name: 'For You', path: '/recommendations', icon: Compass },
+    { name: 'Watch Later', path: '/watch-later', icon: Bookmark },
     { name: 'My List', path: '/library', icon: Heart },
   ];
 

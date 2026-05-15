@@ -67,13 +67,45 @@ export const AuthProvider = ({ children }) => {
         });
     };
 
+    const isInWatchLater = (contentId) => {
+        if (!user?.watchLater) return false;
+        return user.watchLater.some(item => (item._id || item) === contentId);
+    };
+
+    const toggleWatchLater = async (content) => {
+        if (!user || !content?._id) return;
+
+        const contentId = content._id;
+        const wasSaved = isInWatchLater(contentId);
+
+        setUser(prev => ({
+            ...prev,
+            watchLater: wasSaved
+                ? (prev.watchLater || []).filter(item => (item._id || item) !== contentId)
+                : [...(prev.watchLater || []), content],
+        }));
+
+        try {
+            const res = await axios.post('/api/users/watch-later', { contentId });
+            setUser(prev => prev ? { ...prev, watchLater: res.data.watchLater } : prev);
+        } catch (err) {
+            console.error('Failed to toggle watch later', err);
+            setUser(prev => ({
+                ...prev,
+                watchLater: wasSaved
+                    ? [...(prev.watchLater || []), content]
+                    : (prev.watchLater || []).filter(item => (item._id || item) !== contentId),
+            }));
+        }
+    };
+
     // Called after a successful rating POST — updates local state immediately
     const updateRating = (contentId, starValue) => {
         setRatings(prev => ({ ...prev, [contentId]: starValue }));
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, toggleFavoriteState, ratings, updateRating }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, toggleFavoriteState, isInWatchLater, toggleWatchLater, ratings, updateRating }}>
             {children}
         </AuthContext.Provider>
     );
