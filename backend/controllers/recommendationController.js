@@ -11,8 +11,9 @@ const getHybridRecommendations = async (req, res) => {
       return res.status(200).json([]); 
     }
 
+    const k = Math.min(Math.max(parseInt(req.query.k, 10) || 50, 1), 50);
     const response = await fetch(
-      `http://127.0.0.1:8000/recommend/${user.appUserId}?k=20`
+      `http://127.0.0.1:8000/recommend/${user.appUserId}?k=${k}`
     );
 
     if (!response.ok) {
@@ -47,8 +48,9 @@ const getSimilarMovies = async (req, res) => {
     const content = await Content.findById(req.params.contentId);
     if (!content) return res.status(404).json({ message: 'Content not found' });
 
+    const k = Math.min(Math.max(parseInt(req.query.k, 10) || 50, 1), 50);
     const response = await fetch(
-      `http://127.0.0.1:8000/similar/${content.movieId}?k=10`
+      `http://127.0.0.1:8000/similar/${content.movieId}?k=${k}`
     );
     if (!response.ok) throw new Error(`AI engine error: ${response.statusText}`);
 

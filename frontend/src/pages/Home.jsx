@@ -5,27 +5,52 @@ import { fetchTmdbDetails, getTmdbImageUrl } from '../utils/tmdb';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const fetchGenreMovies = async (genre, limit = 50) => {
+    const res = await axios.get(`/api/content?genre=${encodeURIComponent(genre)}&limit=${limit}`);
+    return res.data.content || [];
+};
+
+const dedupeMovies = (movies) => {
+    const seen = new Set();
+    return movies.filter(m => {
+        if (seen.has(m._id)) return false;
+        seen.add(m._id);
+        return true;
+    });
+};
+
 export default function Home() {
     const [popular, setPopular] = useState([]);
     const [personalized, setPersonalized] = useState([]);
+    const [actionMovies, setActionMovies] = useState([]);
+    const [scifiMovies, setScifiMovies] = useState([]);
+    const [comedyMovies, setComedyMovies] = useState([]);
+    const [dramaMovies, setDramaMovies] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Auto-Slider Hero States
     const [heroMovies, setHeroMovies] = useState([]);
     const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
 
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
-                const [popRes, persRes] = await Promise.all([
+                const [popRes, persRes, actionRes, adventureRes, scifiRes, comedyRes, dramaRes] = await Promise.all([
                     axios.get('/api/recommendations/popular?limit=100'),
-                    axios.get('/api/recommendations/personalized')
+                    axios.get('/api/recommendations/personalized'),
+                    fetchGenreMovies('Action', 30),
+                    fetchGenreMovies('Adventure', 30),
+                    fetchGenreMovies('Sci-Fi', 50),
+                    fetchGenreMovies('Comedy', 50),
+                    fetchGenreMovies('Drama', 50),
                 ]);
 
                 setPopular(popRes.data);
                 setPersonalized(persRes.data);
+                setActionMovies(dedupeMovies([...actionRes, ...adventureRes]));
+                setScifiMovies(scifiRes);
+                setComedyMovies(comedyRes);
+                setDramaMovies(dramaRes);
 
-                // Fetch full TMDB Data for the Top 5 movies to drive the slider
                 if (popRes.data.length > 0) {
                     const top5 = popRes.data.slice(0, 5);
                     const tmdbDataPromises = top5.map(movie => fetchTmdbDetails(movie.tmdbId));
@@ -41,7 +66,6 @@ export default function Home() {
         fetchHomeData();
     }, []);
 
-    // 10 Second Auto-Slider Hook
     useEffect(() => {
         if (heroMovies.length === 0) return;
         const interval = setInterval(() => {
@@ -56,21 +80,13 @@ export default function Home() {
 
     const heroItem = heroMovies[currentHeroIndex];
 
-    const actionMovies = popular.filter(
-        m => m.genres && (m.genres.includes('Action') || m.genres.includes('Adventure'))
-    );
-    const scifiMovies = popular.filter(m => m.genres && m.genres.includes('Sci-Fi'));
-    const comedyMovies = popular.filter(m => m.genres && m.genres.includes('Comedy'));
-    const dramaMovies = popular.filter(m => m.genres && m.genres.includes('Drama'));
-
     return (
         <div className="-mt-24 pb-20 overflow-x-hidden">
-            {/* Cinematic Slider Hero Section */}
             {heroMovies.length > 0 && (
                 <div className="relative w-full h-[75vh] min-h-[600px] flex items-end pb-24 group">
                     <AnimatePresence initial={false}>
                         <motion.div
-                            key={currentHeroIndex} // Adding key triggers completely new slider mount
+                            key={currentHeroIndex}
                             initial={{ x: "100%", opacity: 0.8 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "-100%", opacity: 0.8 }}
@@ -82,7 +98,6 @@ export default function Home() {
                                 alt={heroItem.title}
                                 className="w-full h-full object-cover opacity-50"
                             />
-                            {/* Triple Gradients for perfect text blending */}
                             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
                             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
 
@@ -119,7 +134,6 @@ export default function Home() {
                         </motion.div>
                     </AnimatePresence>
 
-                    {/* Progress dots for visual slider feedback */}
                     <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-20">
                         {heroMovies.map((_, idx) => (
                             <div
@@ -131,7 +145,6 @@ export default function Home() {
                 </div>
             )}
 
-            {/* Scrolling recommendation rows spanning directly underneath the hero */}
             <div className="relative z-20 space-y-6">
                 <MovieRow title="AuraFlix Picks For You" movies={personalized} seeMoreLink="/recommendations" />
                 <MovieRow title="Global Trending" movies={popular.slice(5)} seeMoreLink="/category/popular" />

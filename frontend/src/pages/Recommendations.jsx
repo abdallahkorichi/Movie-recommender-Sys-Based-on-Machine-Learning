@@ -4,7 +4,7 @@ import MovieCard from '../components/MovieCard';
 import { Loader2, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 15;
 
 export default function Recommendations() {
     const [personalized, setPersonalized] = useState([]);

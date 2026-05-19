@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Star, Check, Loader2, Bookmark, BookmarkCheck } from 'lucide-react';
-import { getTmdbImageUrl } from '../utils/tmdb';
+import { getTmdbImageUrl, getTopCast, CAST_LIMIT_MODAL } from '../utils/tmdb';
 import axios from 'axios';
 import MovieCard from './MovieCard';
 import { AuthContext } from '../context/AuthContext';
@@ -41,6 +41,7 @@ export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRa
     if (!tmdbData) return null;
 
     const savedForLater = isInWatchLater(content._id);
+    const cast = getTopCast(tmdbData, CAST_LIMIT_MODAL);
 
     const handleRating = async (star) => {
         try {
@@ -112,6 +113,24 @@ export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRa
                                     ))}
                                 </div>
 
+                                {cast.length > 0 && (
+                                    <div>
+                                        <h3 className="text-xs text-slate-400 uppercase tracking-[0.2em] font-black mb-3">Cast</h3>
+                                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                                            {cast.map(actor => (
+                                                <div key={actor.id} className="flex flex-col items-center shrink-0 w-16">
+                                                    <img
+                                                        src={getTmdbImageUrl(actor.profile_path, 'w185')}
+                                                        alt={actor.name}
+                                                        className="w-12 h-12 rounded-full object-cover border-2 border-slate-600"
+                                                    />
+                                                    <span className="text-[10px] text-slate-300 truncate w-full text-center mt-1.5">{actor.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button
                                     onClick={() => toggleWatchLater(content)}
                                     className={`flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border ${
@@ -163,7 +182,7 @@ export default function MovieModal({ isOpen, onClose, content, tmdbData, savedRa
                                         <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                                     ) : similarMovies.length > 0 ? (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                            {similarMovies.slice(0, 8).map(movie => (
+                                            {similarMovies.slice(0, 16).map(movie => (
                                                 <div key={movie._id}>
                                                     <MovieCard
                                                         content={movie}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { fetchTmdbDetails, getTmdbImageUrl } from '../utils/tmdb';
+import { fetchTmdbDetails, getTmdbImageUrl, getTopCast } from '../utils/tmdb';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Loader2, Bookmark, BookmarkCheck } from 'lucide-react';
@@ -14,7 +14,6 @@ export default function MovieCard({ content, onSelectContent = null }) {
     const [hover, setHover] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
-    // Rating from MongoDB context (cross-device)
     const savedRating = ratings[activeContent._id] || null;
     const [ratingLoading, setRatingLoading] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
@@ -45,7 +44,6 @@ export default function MovieCard({ content, onSelectContent = null }) {
                 contentId: activeContent._id,
                 rating: rating
             });
-            // Update global context → no localStorage needed
             updateRating(activeContent._id, rating);
             setShowSaved(true);
             setTimeout(() => setShowSaved(false), 1500);
@@ -58,7 +56,7 @@ export default function MovieCard({ content, onSelectContent = null }) {
 
     if (loading) {
         return (
-            <div className="flex-shrink-0 w-48 h-72 bg-slate-900 border border-slate-800 animate-pulse rounded-lg flex items-center justify-center">
+            <div className="flex-shrink-0 w-48 h-80 bg-slate-900 border border-slate-800 animate-pulse rounded-lg flex items-center justify-center">
                <Loader2 className="w-6 h-6 text-slate-600 animate-spin" />
             </div>
         )
@@ -68,6 +66,7 @@ export default function MovieCard({ content, onSelectContent = null }) {
 
     const posterUrl = getTmdbImageUrl(tmdbData.poster_path, "w500");
     const savedForLater = isInWatchLater(activeContent._id);
+    const cast = getTopCast(tmdbData);
 
     const handleWatchLater = (e) => {
         e.preventDefault();
@@ -94,7 +93,7 @@ export default function MovieCard({ content, onSelectContent = null }) {
             )}
 
             <motion.div 
-                className="relative flex-shrink-0 w-48 h-72 rounded-lg overflow-hidden bg-slate-900 group cursor-pointer border border-slate-800 shadow-xl"
+                className="relative flex-shrink-0 w-48 h-80 rounded-lg overflow-hidden bg-slate-900 group cursor-pointer border border-slate-800 shadow-xl"
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => { setHover(false); setHoveredStar(0); }}
                 onClick={() => {
@@ -159,13 +158,32 @@ export default function MovieCard({ content, onSelectContent = null }) {
                             ))}
                         </div>
 
-                        <div className="pt-1.5 border-t border-slate-600/50 flex flex-col gap-1">
+                        {cast.length > 0 && (
+                            <motion.div
+                                className="flex gap-2 overflow-x-auto pb-1 mb-1.5"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            >
+                                {cast.map(actor => (
+                                    <motion.div key={actor.id} className="flex flex-col items-center shrink-0 w-11">
+                                        <img
+                                            src={getTmdbImageUrl(actor.profile_path, 'w185')}
+                                            alt={actor.name}
+                                            className="w-7 h-7 rounded-full object-cover border border-slate-600"
+                                        />
+                                        <span className="text-[8px] text-slate-300 truncate w-full text-center mt-0.5">{actor.name.split(' ')[0]}</span>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        )}
+
+                        <motion.div className="pt-1.5 border-t border-slate-600/50 flex flex-col gap-1">
                              <span className="text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors"
                                  style={{ color: showSaved ? '#4ade80' : savedRating ? '#facc15' : '#94a3b8' }}
                              >
                                  {showSaved ? '✓ Saved!' : savedRating ? `Your rating: ${savedRating}★` : 'Rate this'}
                              </span>
-                             <div className="flex gap-1 h-5 items-center">
+                             <motion.div className="flex gap-1 h-5 items-center">
                                  {[1, 2, 3, 4, 5].map((star) => (
                                      <button 
                                         key={star}
@@ -190,8 +208,8 @@ export default function MovieCard({ content, onSelectContent = null }) {
                                          />
                                      </button>
                                  ))}
-                             </div>
-                        </div>
+                             </motion.div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
