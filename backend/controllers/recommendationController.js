@@ -8,31 +8,44 @@ const getHybridRecommendations = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user.appUserId) {
-      return res.status(200).json([]); 
+      return res.status(200).json([]);
     }
 
     const k = Math.min(Math.max(parseInt(req.query.k, 10) || 50, 1), 50);
-    const response = await fetch(
-      `http://127.0.0.1:8000/recommend/${user.appUserId}?k=${k}`
-    );
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
-      throw new Error(`AI engine error: ${response.statusText}`);
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/recommend/${user.appUserId}?k=${k}`,
+        { signal: controller.signal }
+      );
+
+      if (!response.ok) {
+        throw new Error(`AI engine error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      clearTimeout(timeout);
+
+      // data.recommendations is [{movieId, title, genres}, ...]
+      const pythonMovieIds = data.recommendations.map(r => r.movieId);
+
+      // Fetch full enriched documents from MongoDB (gives frontend tmdbId, _id, etc.)
+      const richMovies = await Content.find({ movieId: { $in: pythonMovieIds } });
+
+      // Preserve the ranking order Python returned
+      const lookup = Object.fromEntries(richMovies.map(m => [m.movieId, m]));
+      const ordered = pythonMovieIds.map(id => lookup[id]).filter(Boolean);
+
+      res.json(ordered);
+    } catch (error) {
+      clearTimeout(timeout);
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ message: 'AI engine request timed out (10s)' });
+      }
+      throw error;
     }
-
-    const data = await response.json();
-
-    // data.recommendations is [{movieId, title, genres}, ...]
-    const pythonMovieIds = data.recommendations.map(r => r.movieId);
-
-    // Fetch full enriched documents from MongoDB (gives frontend tmdbId, _id, etc.)
-    const richMovies = await Content.find({ movieId: { $in: pythonMovieIds } });
-
-    // Preserve the ranking order Python returned
-    const lookup = Object.fromEntries(richMovies.map(m => [m.movieId, m]));
-    const ordered = pythonMovieIds.map(id => lookup[id]).filter(Boolean);
-
-    res.json(ordered);
   } catch (error) {
     console.error('Recommendations error:', error.message);
     res.status(500).json({ message: error.message });
@@ -49,19 +62,33 @@ const getSimilarMovies = async (req, res) => {
     if (!content) return res.status(404).json({ message: 'Content not found' });
 
     const k = Math.min(Math.max(parseInt(req.query.k, 10) || 50, 1), 50);
-    const response = await fetch(
-      `http://127.0.0.1:8000/similar/${content.movieId}?k=${k}`
-    );
-    if (!response.ok) throw new Error(`AI engine error: ${response.statusText}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    const data = await response.json();
-    const pythonMovieIds = data.similar.map(r => r.movieId);
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/similar/${content.movieId}?k=${k}`,
+        { signal: controller.signal }
+      );
+      if (!response.ok) throw new Error(`AI engine error: ${response.statusText}`);
 
-    const richMovies = await Content.find({ movieId: { $in: pythonMovieIds } });
-    const lookup = Object.fromEntries(richMovies.map(m => [m.movieId, m]));
-    const ordered = pythonMovieIds.map(id => lookup[id]).filter(Boolean);
+      const data = await response.json();
+      clearTimeout(timeout);
 
-    res.json(ordered);
+      const pythonMovieIds = data.similar.map(r => r.movieId);
+
+      const richMovies = await Content.find({ movieId: { $in: pythonMovieIds } });
+      const lookup = Object.fromEntries(richMovies.map(m => [m.movieId, m]));
+      const ordered = pythonMovieIds.map(id => lookup[id]).filter(Boolean);
+
+      res.json(ordered);
+    } catch (error) {
+      clearTimeout(timeout);
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ message: 'AI engine request timed out (10s)' });
+      }
+      throw error;
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -100,15 +127,28 @@ const recordInteraction = async (req, res) => {
       tmdbId:  content.tmdbId || null,
     };
 
-    const response = await fetch('http://127.0.0.1:8000/feedback', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      throw new Error(`AI engine rejected rating: ${errBody}`);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/feedback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+        signal:  controller.signal,
+      });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(`AI engine rejected rating: ${errBody}`);
+      }
+      clearTimeout(timeout);
+    } catch (error) {
+      clearTimeout(timeout);
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ message: 'AI engine request timed out (10s)' });
+      }
+      throw error;
     }
 
     // Auto-add to favorites when user rates ≥ 4 stars
@@ -134,17 +174,32 @@ const recordInteraction = async (req, res) => {
 const getPopularContent = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
-    const response = await fetch(`http://127.0.0.1:8000/popular?n=${limit}`);
-    if (!response.ok) throw new Error('AI engine error');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    const data = await response.json();
-    const pythonMovieIds = data.popular.map(r => r.movieId);
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/popular?n=${limit}`, {
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error('AI engine error');
 
-    const richMovies = await Content.find({ movieId: { $in: pythonMovieIds } });
-    const lookup = Object.fromEntries(richMovies.map(m => [m.movieId, m]));
-    const ordered = pythonMovieIds.map(id => lookup[id]).filter(Boolean);
+      const data = await response.json();
+      clearTimeout(timeout);
 
-    res.json(ordered);
+      const pythonMovieIds = data.popular.map(r => r.movieId);
+
+      const richMovies = await Content.find({ movieId: { $in: pythonMovieIds } });
+      const lookup = Object.fromEntries(richMovies.map(m => [m.movieId, m]));
+      const ordered = pythonMovieIds.map(id => lookup[id]).filter(Boolean);
+
+      res.json(ordered);
+    } catch (error) {
+      clearTimeout(timeout);
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ message: 'AI engine request timed out (10s)' });
+      }
+      throw error;
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

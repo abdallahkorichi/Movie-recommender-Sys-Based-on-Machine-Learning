@@ -45,5 +45,7 @@ const contentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+contentSchema.index({ title: 'text' });
+
 const Content = mongoose.model('Content', contentSchema);
 export default Content;
