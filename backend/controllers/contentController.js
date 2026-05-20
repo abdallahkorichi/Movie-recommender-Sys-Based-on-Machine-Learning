@@ -8,7 +8,10 @@ const getContent = async (req, res) => {
   const query = {};
 
   if (type)   query.type = type;
-  if (genre)  query.genres = { $in: [genre] };
+  if (genre) {
+    const genreList = genre.split(',');
+    query.genres = { $in: genreList };
+  }
   if (search) query.title = { $regex: search, $options: 'i' };
 
   const parsedPage  = parseInt(page);

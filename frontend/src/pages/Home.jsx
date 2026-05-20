@@ -34,19 +34,18 @@ export default function Home() {
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
-                const [popRes, persRes, actionRes, adventureRes, scifiRes, comedyRes, dramaRes] = await Promise.all([
-                    axios.get('/api/recommendations/popular?limit=100'),
-                    axios.get('/api/recommendations/personalized'),
-                    fetchGenreMovies('Action', 30),
-                    fetchGenreMovies('Adventure', 30),
-                    fetchGenreMovies('Sci-Fi', 50),
-                    fetchGenreMovies('Comedy', 50),
-                    fetchGenreMovies('Drama', 50),
+                const [popRes, persRes, actionRes, scifiRes, comedyRes, dramaRes] = await Promise.all([
+                    axios.get('/api/recommendations/popular?limit=25'),
+                    axios.get('/api/recommendations/personalized?k=20'),
+                    fetchGenreMovies('Action,Adventure', 20),
+                    fetchGenreMovies('Sci-Fi,Fantasy', 20),
+                    fetchGenreMovies('Comedy', 20),
+                    fetchGenreMovies('Drama,Thriller', 20),
                 ]);
 
                 setPopular(popRes.data);
                 setPersonalized(persRes.data);
-                setActionMovies(dedupeMovies([...actionRes, ...adventureRes]));
+                setActionMovies(actionRes);
                 setScifiMovies(scifiRes);
                 setComedyMovies(comedyRes);
                 setDramaMovies(dramaRes);
@@ -150,7 +149,7 @@ export default function Home() {
                 <MovieRow title="Global Trending" movies={popular.slice(5)} seeMoreLink="/category/popular" />
                 {actionMovies.length > 0 && <MovieRow title="Action & Adventure" movies={actionMovies} seeMoreLink="/category/action" />}
                 {scifiMovies.length > 0 && <MovieRow title="Sci-Fi & Fantasy" movies={scifiMovies} seeMoreLink="/category/scifi" />}
-                {comedyMovies.length > 0 && <MovieRow title="Laugh Out Loud" movies={comedyMovies} seeMoreLink="/category/comedy" />}
+                {comedyMovies.length > 0 && <MovieRow title="Comedy" movies={comedyMovies} seeMoreLink="/category/comedy" />}
                 {dramaMovies.length > 0 && <MovieRow title="Drama & Thriller" movies={dramaMovies} seeMoreLink="/category/drama" />}
             </div>
         </div>

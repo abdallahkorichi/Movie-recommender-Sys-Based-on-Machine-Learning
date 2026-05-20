@@ -8,10 +8,10 @@ import { motion } from 'framer-motion';
 const CATEGORY_MAP = {
     personalized: { title: 'AuraFlix Picks For You', filter: null },
     popular: { title: 'Global Trending', filter: null },
-    action: { title: 'Action & Adventure', filter: 'Action' },
-    scifi: { title: 'Sci-Fi & Fantasy', filter: 'Sci-Fi' },
-    comedy: { title: 'Laugh Out Loud', filter: 'Comedy' },
-    drama: { title: 'Drama & Thriller', filter: 'Drama' },
+    action: { title: 'Action & Adventure', filter: 'Action,Adventure' },
+    scifi: { title: 'Sci-Fi & Fantasy', filter: 'Sci-Fi,Fantasy' },
+    comedy: { title: 'Comedy', filter: 'Comedy' },
+    drama: { title: 'Drama & Thriller', filter: 'Drama,Thriller' },
 };
 
 const ITEMS_PER_PAGE = 15;
