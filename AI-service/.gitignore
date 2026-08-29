@@ -8,3 +8,8 @@ data/
 artifacts/
 artifacts_backup/
 data/raw/
+
+# Environment files
+.env
+.env.*
+!.env.example
