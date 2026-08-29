@@ -20,6 +20,7 @@ export default function WatchLater() {
                 <Bookmark className="w-6 h-6 text-primary fill-primary" />
             </div>
             
+            <p className="text-slate-400 mb-10 text-lg">Movies you've saved to watch later.</p>
             {user.watchLater && user.watchLater.length > 0 ? (
                 <div className="flex flex-wrap gap-6 justify-start">
                     {user.watchLater.map(item => (

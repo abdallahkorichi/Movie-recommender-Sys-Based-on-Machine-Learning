@@ -19,7 +19,7 @@ export default function Library() {
                 <h1 className="text-4xl font-bold text-white tracking-tight">My List</h1>
                 <Heart className="w-6 h-6 text-accent fill-accent" />
             </div>
-            {/* <p className="text-slate-400 mb-10 text-lg"></p> */}
+            <p className="text-slate-400 mb-10 text-lg">Your favorite movies.</p>
             
             {user.favorites && user.favorites.length > 0 ? (
                 <div className="flex flex-wrap gap-6 justify-start">
